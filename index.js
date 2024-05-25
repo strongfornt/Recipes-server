@@ -29,6 +29,28 @@ async function run() {
     const recipesCollection = database.collection("recipes")
 
     //recipes related api start =========================================================
+    app.get('/recipes',async(req,res)=>{
+        const filter = req.query;
+        let query = {}
+        if(filter.category){
+            query.category = filter.category;
+        }
+        if(filter.country){
+            query.country = { $regex: filter.country, $options: 'i' };
+        }
+        if(filter.recipe){
+            query.name = { $regex: filter.recipe, $options: 'i' };
+        }
+        const result = await recipesCollection.find(query).toArray()
+        res.send(result);
+    })
+    //for the home page count ============
+    app.get('/recipe',async(req,res)=>{
+        const result = await recipesCollection.find().toArray()
+        res.send(result);
+    })
+    //for the home page count end ============
+
     app.post('/recipes',async(req,res)=>{
         const recipe = req.body;
         const result = await recipesCollection.insertOne(recipe)
