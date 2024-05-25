@@ -26,6 +26,15 @@ async function run() {
   try {
     const database = client.db("recipeDB");
     const userCollection = database.collection("users")
+    const recipesCollection = database.collection("recipes")
+
+    //recipes related api start =========================================================
+    app.post('/recipes',async(req,res)=>{
+        const recipe = req.body;
+        const result = await recipesCollection.insertOne(recipe)
+        res.send(result)
+    })
+    //recipes related api end =========================================================
 
     //user related api start ==============================================================
     app.get('/users',async(req,res)=>{
