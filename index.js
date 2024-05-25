@@ -1,5 +1,5 @@
 const express = require('express');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 const app = express();
 const cors = require('cors');
@@ -41,7 +41,17 @@ async function run() {
         if(filter.recipe){
             query.name = { $regex: filter.recipe, $options: 'i' };
         }
-        const result = await recipesCollection.find(query).toArray()
+       const options = {
+         projection : {
+            
+            name: 1,
+            image: 1,
+            purchasedBy: 1,
+           'creator.email': 1,
+            country: 1
+        }
+       }
+        const result = await recipesCollection.find(query,options).toArray()
         res.send(result);
     })
     //for the home page count ============
@@ -50,6 +60,14 @@ async function run() {
         res.send(result);
     })
     //for the home page count end ============
+    //for the dynamic details recipes start ===================================
+    app.get('/recipe/:id',async(req,res)=>{
+        const id = req.params.id;
+        const query = {_id : new ObjectId(id)}
+        const result = await recipesCollection.findOne(query)
+        res.send(result);
+    })
+    //for the dynamic details recipes end ===================================
 
     app.post('/recipes',async(req,res)=>{
         const recipe = req.body;
