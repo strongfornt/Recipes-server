@@ -1,6 +1,7 @@
 const express = require('express');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
+const jwt = require('jsonwebtoken');
 const app = express();
 const cors = require('cors');
 
@@ -22,11 +23,37 @@ const client = new MongoClient(uri, {
   }
 });
 
+//middleWare
+const verifyToken =async (req,res,next) => {
+   
+    if(!req.headers.authorization){
+      return res.status(401).send({message:'unauthorized access'})
+    }
+    const token = req.headers.authorization.split(' ')[1]
+    jwt.verify(token,process.env.ACCESS_TOKEN,(err,decoded)=>{
+      if(err){
+        return res.status(401).send({message:'unauthorized access'})
+      }
+      req.decoded = decoded;
+      next();
+    })
+    
+  }
+
 async function run() {
   try {
     const database = client.db("recipeDB");
     const userCollection = database.collection("users")
     const recipesCollection = database.collection("recipes")
+
+      //jwt related api
+      app.post('/jwt',async(req,res)=>{
+        const user = req.body;
+        const token = jwt.sign(user,process.env.ACCESS_TOKEN,{
+          expiresIn:'1h'
+        })
+        res.send({token})
+      })
 
     //recipes related api start =========================================================
     app.get('/recipes',async(req,res)=>{
@@ -78,7 +105,8 @@ async function run() {
     })
     //for the home page count end ============
     //for the dynamic details recipes start ===================================
-    app.get('/recipe/:id',async(req,res)=>{
+    app.get('/recipe/:id',verifyToken,async(req,res)=>{
+        
         const id = req.params.id;
         const query = {_id : new ObjectId(id)}
         const result = await recipesCollection.findOne(query)
