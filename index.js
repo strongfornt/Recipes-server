@@ -92,7 +92,25 @@ async function run() {
         res.send(result)
     })
 
-    //modified purchased array and watchCount from recipesCollection based on the condition 
+    //modified purchased array and watchCount from recipesCollection based on the condition start ===========
+    app.put('/recipe',async(req,res)=>{
+        const recipe = req.body;
+        const {buyerMail,id} = recipe || {}
+        const query = {_id: new ObjectId(id)}
+        //check if the user already has purchased the recipe=====
+        const existingRecipe = await recipesCollection.findOne(query);
+        if(existingRecipe && existingRecipe.purchasedBy.includes(buyerMail)){
+            return res.send({message:'alreadyExist'})
+        }
+        // Update the recipe with new purchase info==================================
+        const updateDoc = {
+            $push: {purchasedBy:buyerMail},
+            $inc: {watch: 1}
+        }
+        const result = await recipesCollection.updateOne(query,updateDoc)
+        res.send(result)
+    })
+    //modified purchased array and watchCount from recipesCollection based on the condition end ===========
 
     //recipes related api end =========================================================
 
