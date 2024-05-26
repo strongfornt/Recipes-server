@@ -54,6 +54,23 @@ async function run() {
         const result = await recipesCollection.find(query,options).toArray()
         res.send(result);
     })
+
+    // dynamic recipes fetch by category for the suggested section =================================
+    app.get('/recipes/:category',async(req,res)=>{
+        const category = req.params.category;
+        const query = {category:category}
+        const options = {
+            projection : {
+               
+               name: 1,
+               image: 1,
+               category: 1
+           }
+          }
+        const result = await recipesCollection.find(query,options).toArray()
+        res.send(result);
+    })
+    // dynamic recipes fetch by category for the suggested section end=================================
     //for the home page count ============
     app.get('/recipe',async(req,res)=>{
         const result = await recipesCollection.find().toArray()
@@ -74,6 +91,9 @@ async function run() {
         const result = await recipesCollection.insertOne(recipe)
         res.send(result)
     })
+
+    //modified purchased array and watchCount from recipesCollection based on the condition 
+
     //recipes related api end =========================================================
 
     //user related api start ==============================================================
@@ -81,6 +101,33 @@ async function run() {
         const result = await userCollection.find().toArray()
         res.send(result)
     })
+
+    app.put('/users',async(req,res)=>{
+        const userInfo = req.body;
+        //for the buyer========================================
+        const resultBuyer = await userCollection.updateOne(
+            {email:userInfo.buyerMail,coin:{ $gte: 10 }},
+            {$inc:{coin:-10}}
+        )
+        //for the creator==================================
+        const resultCreator = await userCollection.updateOne(
+            {email:userInfo.creatorMail},
+            {$inc:{coin:1}}
+        )
+
+        res.send({resultBuyer,resultCreator})
+        
+    })
+
+    //get single user ========================================================
+    app.get('/users/:email',async(req,res)=>{
+        const email = req.params.email;
+        const query ={email : email}
+        const result = await userCollection.findOne(query)
+        res.send(result);
+    })
+    //get single user end ========================================================
+
     app.post('/users',async(req,res)=>{
         const user = req.body;
         const query = {email:user.email}
